@@ -21,39 +21,37 @@
 
     // ===================== CAMBIO DE MODO =====================
     const modeBtns = $$('.mode-btn');
-    
-    // Diccionario centralizado que mapea cada modo con su contenedor HTML
-    const panels = {
-        'pdf2img': $('#pdf2imgPanel'),
-        'img2pdf': $('#img2pdfPanel'),
-        'mergepdf': $('#mergePdfPanel'),
-        'splitpdf': $('#splitPdfPanel'),
-        'renamefiles': $('#renameFilesPanel'),
-        'word2pdf': $('#word2pdfPanel'),
-        'pdf2word': $('#pdf2wordPanel')
-    };
 
     modeBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Previene cualquier comportamiento nativo indeseado del navegador
-            e.preventDefault(); 
-            
-            // currentTarget asegura que siempre interactuemos con el botón
-            const clickedBtn = e.currentTarget; 
+            e.preventDefault();
+            const clickedBtn = e.currentTarget;
+            const targetMode = clickedBtn.dataset.mode;
 
-            // 1. Quitar la clase activa de todos y asignarla al botón presionado
+            // 1. Quitar clase active a todos los botones y dársela al presionado
             modeBtns.forEach(b => b.classList.remove('active'));
             clickedBtn.classList.add('active');
 
-            // 2. Ocultar de forma segura todos los paneles que existan en el DOM
-            Object.values(panels).forEach(panel => {
-                if (panel) panel.style.display = 'none';
+            // 2. Ocultar todos los paneles principales dentro de <main>
+            const mainPanels = document.querySelectorAll('main > div');
+            mainPanels.forEach(panel => {
+                panel.style.display = 'none';
             });
 
-            // 3. Mostrar exclusivamente el panel correspondiente
-            const targetMode = clickedBtn.dataset.mode;
-            if (panels[targetMode]) {
-                panels[targetMode].style.display = 'block';
+            // 3. Determinar el ID exacto del panel a mostrar
+            let targetPanelId = '';
+            if (targetMode === 'pdf2img') targetPanelId = 'pdf2imgPanel';
+            else if (targetMode === 'img2pdf') targetPanelId = 'img2pdfPanel';
+            else if (targetMode === 'mergepdf') targetPanelId = 'mergePdfPanel';
+            else if (targetMode === 'splitpdf') targetPanelId = 'splitPdfPanel';
+            else if (targetMode === 'renamefiles') targetPanelId = 'renameFilesPanel';
+            else if (targetMode === 'word2pdf') targetPanelId = 'word2pdfPanel';
+            else if (targetMode === 'pdf2word') targetPanelId = 'pdf2wordPanel';
+
+            // 4. Mostrar el panel correspondiente si existe
+            const activePanel = document.getElementById(targetPanelId);
+            if (activePanel) {
+                activePanel.style.display = 'block';
             }
         });
     });
@@ -89,45 +87,51 @@
     let shouldCancelPdf = false;
     let convertedPagesPdf = [];
 
-    dropZonePdf.addEventListener('click', () => fileInputPdf.click());
-    fileInputPdf.addEventListener('change', (e) => {
-        if (e.target.files[0]) handlePdfFile(e.target.files[0]);
-    });
-
-    dropZonePdf.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZonePdf.classList.add('dragover');
-    });
-    dropZonePdf.addEventListener('dragleave', () => dropZonePdf.classList.remove('dragover'));
-    dropZonePdf.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZonePdf.classList.remove('dragover');
-        const f = e.dataTransfer.files[0];
-        if (f && f.type === 'application/pdf') handlePdfFile(f);
-        else showToast('Solo se permiten archivos PDF', 'error');
-    });
-
-    formatSelectorPdf.querySelectorAll('.segment').forEach(btn => {
-        btn.addEventListener('click', () => {
-            formatSelectorPdf.querySelectorAll('.segment').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const isJpeg = btn.dataset.value === 'jpeg';
-            qualityRangePdf.disabled = !isJpeg;
-            qualityValuePdf.textContent = isJpeg ? qualityRangePdf.value + '%' : '100%';
+    if (dropZonePdf && fileInputPdf) {
+        dropZonePdf.addEventListener('click', () => fileInputPdf.click());
+        fileInputPdf.addEventListener('change', (e) => {
+            if (e.target.files[0]) handlePdfFile(e.target.files[0]);
         });
-    });
 
-    qualityRangePdf.addEventListener('input', (e) => {
-        qualityValuePdf.textContent = e.target.value + '%';
-    });
+        dropZonePdf.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZonePdf.classList.add('dragover');
+        });
+        dropZonePdf.addEventListener('dragleave', () => dropZonePdf.classList.remove('dragover'));
+        dropZonePdf.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZonePdf.classList.remove('dragover');
+            const f = e.dataTransfer.files[0];
+            if (f && f.type === 'application/pdf') handlePdfFile(f);
+            else showToast('Solo se permiten archivos PDF', 'error');
+        });
+    }
 
-    removeFilePdf.addEventListener('click', resetPdfMode);
-    convertBtnPdf.addEventListener('click', startPdfConversion);
-    cancelBtnPdf.addEventListener('click', () => {
+    if (formatSelectorPdf) {
+        formatSelectorPdf.querySelectorAll('.segment').forEach(btn => {
+            btn.addEventListener('click', () => {
+                formatSelectorPdf.querySelectorAll('.segment').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const isJpeg = btn.dataset.value === 'jpeg';
+                qualityRangePdf.disabled = !isJpeg;
+                qualityValuePdf.textContent = isJpeg ? qualityRangePdf.value + '%' : '100%';
+            });
+        });
+    }
+
+    if (qualityRangePdf) {
+        qualityRangePdf.addEventListener('input', (e) => {
+            qualityValuePdf.textContent = e.target.value + '%';
+        });
+    }
+
+    if (removeFilePdf) removeFilePdf.addEventListener('click', resetPdfMode);
+    if (convertBtnPdf) convertBtnPdf.addEventListener('click', startPdfConversion);
+    if (cancelBtnPdf) cancelBtnPdf.addEventListener('click', () => {
         shouldCancelPdf = true;
         showToast('Cancelando...');
     });
-    downloadZipBtnPdf.addEventListener('click', downloadPdfZip);
+    if (downloadZipBtnPdf) downloadZipBtnPdf.addEventListener('click', downloadPdfZip);
 
     async function handlePdfFile(file) {
         if (file.type !== 'application/pdf') {
@@ -334,34 +338,38 @@
     const pdfFileName = $('#pdfFileName');
     const downloadPdfBtn = $('#downloadPdfBtn');
 
-    let imageFiles = []; // {file, id, url}
+    let imageFiles = []; 
     let isGeneratingPdf = false;
     let generatedPdfBlob = null;
 
-    dropZoneImg.addEventListener('click', () => fileInputImg.click());
-    fileInputImg.addEventListener('change', (e) => {
-        if (e.target.files.length) handleImageFiles(Array.from(e.target.files));
-    });
+    if (dropZoneImg && fileInputImg) {
+        dropZoneImg.addEventListener('click', () => fileInputImg.click());
+        fileInputImg.addEventListener('change', (e) => {
+            if (e.target.files.length) handleImageFiles(Array.from(e.target.files));
+        });
 
-    dropZoneImg.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZoneImg.classList.add('dragover');
-    });
-    dropZoneImg.addEventListener('dragleave', () => dropZoneImg.classList.remove('dragover'));
-    dropZoneImg.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZoneImg.classList.remove('dragover');
-        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-        if (files.length) handleImageFiles(files);
-        else showToast('Solo se permiten imágenes PNG o JPEG', 'error');
-    });
+        dropZoneImg.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZoneImg.classList.add('dragover');
+        });
+        dropZoneImg.addEventListener('dragleave', () => dropZoneImg.classList.remove('dragover'));
+        dropZoneImg.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZoneImg.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            if (files.length) handleImageFiles(files);
+            else showToast('Solo se permiten imágenes PNG o JPEG', 'error');
+        });
+    }
 
-    imgQualityRange.addEventListener('input', (e) => {
-        imgQualityValue.textContent = e.target.value + '%';
-    });
+    if (imgQualityRange) {
+        imgQualityRange.addEventListener('input', (e) => {
+            imgQualityValue.textContent = e.target.value + '%';
+        });
+    }
 
-    removeFileImg.addEventListener('click', resetImgMode);
-    convertBtnImg.addEventListener('click', startImgToPdf);
+    if (removeFileImg) removeFileImg.addEventListener('click', resetImgMode);
+    if (convertBtnImg) convertBtnImg.addEventListener('click', startImgToPdf);
 
     function handleImageFiles(files) {
         const valid = files.filter(f => f.type === 'image/png' || f.type === 'image/jpeg' || f.type === 'image/jpg');
@@ -381,6 +389,7 @@
     }
 
     function renderImageQueue() {
+        if (!imageQueue) return;
         imageQueue.innerHTML = '';
         imageFiles.forEach((item, index) => {
             const div = document.createElement('div');
@@ -446,7 +455,6 @@
 
         const pageSize = pageSizeSelect.value;
         const orientation = orientationSelect.value;
-        const quality = parseInt(imgQualityRange.value) / 100;
         const total = imageFiles.length;
 
         isGeneratingPdf = true;
@@ -465,7 +473,6 @@
         try {
             const { jsPDF } = window.jspdf;
 
-            // Calcular tamaño de página
             let pageWidth, pageHeight;
             const isLandscape = orientation === 'landscape';
 
@@ -474,8 +481,6 @@
             } else if (pageSize === 'letter') {
                 pageWidth = 215.9; pageHeight = 279.4;
             } else {
-                // Original: usamos el tamaño de la primera imagen como base temporal
-                // se ajustará por imagen
                 pageWidth = 210; pageHeight = 297;
             }
 
@@ -492,28 +497,12 @@
 
                 const item = imageFiles[i];
                 const imgData = await fileToBase64(item.file);
-
-                // Obtener dimensiones de la imagen
                 const dims = await getImageDimensions(imgData);
                 const imgRatio = dims.width / dims.height;
 
-                // Si es modo original, crear página del tamaño de la imagen (convertido a mm, asumiendo 96dpi)
-                // 1 inch = 25.4mm, 96px = 1 inch en CSS, pero para impresión usamos 72dpi por defecto en jsPDF
-                // Mejor: ajustar imagen al tamaño de página actual manteniendo aspecto
                 let pw = doc.internal.pageSize.getWidth();
                 let ph = doc.internal.pageSize.getHeight();
 
-                if (pageSize === 'original') {
-                    // Usar dimensiones originales en mm (asumiendo 72dpi: px / 72 * 25.4)
-                    pw = (dims.width / 72) * 25.4;
-                    ph = (dims.height / 72) * 25.4;
-                    if (i === 0) {
-                        // Recrear documento con tamaño correcto de primera imagen
-                    }
-                    // Para simplificar, ajustamos la imagen a la página actual manteniendo aspecto
-                }
-
-                // Calcular dimensiones ajustadas a la página con márgenes de 5mm
                 const margin = 5;
                 const maxW = pw - margin * 2;
                 const maxH = ph - margin * 2;
@@ -534,7 +523,6 @@
 
                 if (i > 0) doc.addPage();
 
-                // Si es JPEG, usar compresión. Si es PNG, jsPDF lo maneja bien.
                 const imgFormat = item.file.type === 'image/png' ? 'PNG' : 'JPEG';
                 doc.addImage(imgData, imgFormat, x, y, drawW, drawH, undefined, 'FAST');
             }
@@ -542,8 +530,6 @@
             setImgProgress(100, 'Finalizando...');
 
             generatedPdfBlob = doc.output('blob');
-            const pdfUrl = URL.createObjectURL(generatedPdfBlob);
-
             progressSectionImg.style.display = 'none';
             resultsSectionImg.style.display = 'block';
 
