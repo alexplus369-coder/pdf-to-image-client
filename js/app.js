@@ -21,20 +21,39 @@
 
     // ===================== CAMBIO DE MODO =====================
     const modeBtns = $$('.mode-btn');
-    const pdf2imgPanel = $('#pdf2imgPanel');
-    const img2pdfPanel = $('#img2pdfPanel');
+    
+    // Diccionario centralizado que mapea cada modo con su contenedor HTML
+    const panels = {
+        'pdf2img': $('#pdf2imgPanel'),
+        'img2pdf': $('#img2pdfPanel'),
+        'mergepdf': $('#mergePdfPanel'),
+        'splitpdf': $('#splitPdfPanel'),
+        'renamefiles': $('#renameFilesPanel'),
+        'word2pdf': $('#word2pdfPanel'),
+        'pdf2word': $('#pdf2wordPanel')
+    };
 
     modeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+            // Previene cualquier comportamiento nativo indeseado del navegador
+            e.preventDefault(); 
+            
+            // currentTarget asegura que siempre interactuemos con el botón
+            const clickedBtn = e.currentTarget; 
+
+            // 1. Quitar la clase activa de todos y asignarla al botón presionado
             modeBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const mode = btn.dataset.mode;
-            if (mode === 'pdf2img') {
-                pdf2imgPanel.style.display = 'block';
-                img2pdfPanel.style.display = 'none';
-            } else {
-                pdf2imgPanel.style.display = 'none';
-                img2pdfPanel.style.display = 'block';
+            clickedBtn.classList.add('active');
+
+            // 2. Ocultar de forma segura todos los paneles que existan en el DOM
+            Object.values(panels).forEach(panel => {
+                if (panel) panel.style.display = 'none';
+            });
+
+            // 3. Mostrar exclusivamente el panel correspondiente
+            const targetMode = clickedBtn.dataset.mode;
+            if (panels[targetMode]) {
+                panels[targetMode].style.display = 'block';
             }
         });
     });
